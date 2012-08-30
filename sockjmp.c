@@ -68,13 +68,19 @@ typedef struct tSocket {
 unsigned long name_resolve(char *host_name)
 {
 	struct in_addr addr;
+#ifndef STATIC
 	struct hostent *host_ent;
+#endif /* STATIC */
 	if((addr.s_addr=inet_addr(host_name))==-1) {
-    	host_ent=(struct hostent *)gethostbyname(host_name);
-    	if(host_ent==NULL)
-    		return -1;
-    	memcpy((void *)host_ent->h_addr, (void *)&addr.s_addr, host_ent->h_length);
-    }
+#ifndef STATIC
+    		host_ent=(struct hostent *)gethostbyname(host_name);
+	    	if(host_ent==NULL)
+    			return -1;
+	    	memcpy((void *)host_ent->h_addr, (void *)&addr.s_addr, host_ent->h_length);
+#else
+		return 0;
+#endif /* STATIC */
+   	}
 	return (addr.s_addr);
 }
 
@@ -192,7 +198,6 @@ TSocket *parse_arg(char *arg)
 						
 					/* if next char is not ':' but a number, LPORT is specified */
 					cur++;
-					_d("TCHAR: %c\n",*cur);
 					if (((*cur)!=':') && ((*cur)>='0') && ((*cur)<='9'))
 					{
 						off = cur;
@@ -208,7 +213,6 @@ TSocket *parse_arg(char *arg)
 						}
 						else
 						{
-							_d("Oops\n");
 							free(sock_info);
 							return NULL;
 						}
@@ -217,7 +221,6 @@ TSocket *parse_arg(char *arg)
 					/* next char must be ':' */
 					if (*cur!=':')
 					{
-						_d("Oops 1\n");
 						/* free sock_info and return NULL */
 						free(sock_info);
 						return NULL;
@@ -261,7 +264,6 @@ TSocket *parse_arg(char *arg)
 						}
 						else
 						{
-							_d("Oops 2\n");
 							/* free sock_info and return NULL */
 							free(sock_info);
 							return NULL;
@@ -301,7 +303,7 @@ int server(TSocket *sock)
 	/* set socket reuse */
 	setsockopt(sock->sock, SOL_SOCKET, SO_REUSEADDR, &reuse_addr, sizeof(reuse_addr));
 
-  /* set non-blocking */
+	/* set non-blocking */
 	x=fcntl(sock->sock,F_GETFL,0);
 	fcntl(sock->sock,F_SETFL,x|O_NONBLOCK);	
 	
@@ -478,13 +480,17 @@ int main (int argc, char **argv)
 	TSocket *master_in,*master_out;
 	int err,nfd=0;          
 
+#ifdef STATIC
+        _e("[!] sockjmp is statically linked, name resolution disabled.\n");
+#endif /* STATIC */
+
 	/* check args */
 	if (argc != 3)
 	{
 		_e("Usage: %s [i|o|x](LPORT):IP:PORT [i|o|x](LPORT):IP:PORT\n", argv[0]);
 		return -1;
 	}
-	
+
 	/* parse args */
 	master_in = parse_arg(argv[1]);
 	if (!master_in)
