@@ -16,6 +16,8 @@ an internal service. Moreover, some cases are hard to handle, especially when
 reverse TCP connections are used to connect a client (on pentester side) to a
 remote service (on target server side).
 
+Unlike socat, sockjmp is very light and can be statically compiled using gcc.
+
 2. Features
 
 Sockjmp allows basic TCP socket bridging operations:
@@ -46,10 +48,15 @@ compromised server can be encrypted thanks again to sockjmp. A quick way to
 do this consists in dropping onto the remote server a statically linked
 sockjmp version, and use it to create the reverse TCP connection. Therefore,
 all data sent between the pentester sockjmp instance and the server-side
-instance is encrypted and cannot be intercepted (well, this is possible but
-not trivial).
+instance is encrypted (xor-based encryption).
 
+3. Benefits
 
+- Sockjmp weights only a half Mb when statically linked and about a few Kb when dynamically linked.
+- Sockjmp allows encrypted communication channels between two hosts
+- Sockjmp allows all kind of combination of socket
 
+4. Credits
 
+Loic Valbon, Anthony Baube, Sysdream
 
